@@ -96,7 +96,7 @@ filenames_data = list.files(path = "data_p2/") #import data
 
 Then, we iterate file names and read in data for each subject using `purrr::map` and saving the result as a new variable in the dataframe. Additionally, we add each participant's id as the first entry column. 
 
-```{r}
+```{r, message = FALSE}
 files_df = map_dfr(filenames_data, ~read_csv(file.path("data_p2/", .)), .id = "id")|>
   mutate(id = as.numeric(id))|>
   bind_rows()
@@ -126,6 +126,7 @@ files_df_tidy = files_df|>
   select(-id)|>
   relocate(subject_id, arm)|>
   mutate(subject_id = as.character(subject_id))
+
 ```
 The above data frame containing subject id for both control and experiment groups as well as each week's values for every participants. It has `r nrow(files_df_tidy)` rows and `r ncol(files_df_tidy)` columns. 
 
@@ -146,3 +147,82 @@ spaghetti_p+
   
   
 ```
+Based on the above graph, we can see that the mean values(indicated by the black triangle points) of the control group is generally more stable and are less than their corresponding experiment groups for each week. Conversely, the mean value of the experiment group increases almost every week from week 1 to week 8. 
+
+## Problem 3
+
+First, set the seed so that our results would be reproducible.
+```{r}
+set.seed(1) #so that the results are reproducible 
+```
+
+Then, we generate 5000 datasets from the model.
+
+```{r}
+output = vector("list", 5000)
+
+for (i in 1: 5000){
+  dataset = rnorm(n = 30, mean = 0, sd = 5)
+  output[[i]] = dataset
+}
+```
+
+Next, for each dataset, save mu_hat and the p-value.
+
+```{r}
+t_test = function(data){
+  t.test(data, conf.level = 0.95)|>
+    broom::tidy()|>
+    select(estimate, p.value)
+}
+
+#when the true mean is 0
+t_test0 = map(output, t_test)|>
+  bind_rows()
+```
+Then, we can use simulation to repeat the above process for true mean = {1,2,3,4,5,6}.
+
+```{r}
+simulation = function(true_mean){
+  sim_data = tibble(
+    x = rnorm(n = 30, mean = true_mean, sd = 5)
+  )
+  
+  output = sim_data|>
+    t.test()|>
+    broom::tidy()|>
+    select(estimate, p.value)
+}
+
+sim_results_df = 
+  expand_grid(
+    true_mean = c(1,2,3,4,5,6),
+    iter = 1:5000
+  ) |> 
+  mutate(
+    estimate = map(true_mean, simulation)
+  ) |> 
+  unnest(estimate)
+  
+```
+
+
+### Visualization: Part 1
+
+```{r visualization_p3_1}
+sim_results_df|>
+  group_by(true_mean)|>
+  summarise(
+    reject = sum(p.value < 0.05),
+    reject_prop = reject/5000
+  )|>
+  ggplot(aes(x = true_mean, y = reject_prop))+
+  geom_line()+
+  scale_x_continuous(breaks = c(1:6))+
+  labs(title = "Reject Proportion for Each True Mean")+
+  xlab("True Mean")+
+  ylab("Reject Proportion")
+```
+Based on the above graph, we can see that, as the true mean increases, the proportion of rejected null hypothesis increases. This association can be interpreted as larger effect size would increase the power of the study. 
+
+
