@@ -82,3 +82,48 @@ test|>
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
+## Problem 2
+
+### Step 1
+
+Ceate a dataframe containing all file names.
+
+```{r}
+filenames_data = list.files(path = "data_p2/") #import data
+```
+
+### Step 2
+
+Then, we iterate file names and read in data for each subject using `purrr::map` and saving the result as a new variable in the dataframe. Additionally, we add each participant's id as the first entry column. 
+
+```{r}
+files_df = map_dfr(filenames_data, ~read_csv(file.path("data_p2/", .)), .id = "id")|>
+  mutate(id = as.numeric(id))|>
+  bind_rows()
+```
+
+
+
+### Step 3
+
+Finally, we should tidy the `files_df` data frame and include the control arm and subject ID.
+
+```{r}
+files_df_tidy = files_df|>
+  mutate(control_arm = case_when(
+    id < 11 ~ "Control",
+    id >10 ~ "Experiment"
+  ),
+  subject_id = ifelse(
+    id < 11, id, id-10
+  )) |>
+  pivot_longer(
+    cols = starts_with("week"),
+    names_to = "week",
+    values_to = "values",
+    names_prefix = "week_"
+  )|>
+  select(-id)|>
+  relocate(subject_id, control_arm)
+```
+
