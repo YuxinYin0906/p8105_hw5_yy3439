@@ -110,7 +110,7 @@ Finally, we should tidy the `files_df` data frame and include the control arm an
 
 ```{r}
 files_df_tidy = files_df|>
-  mutate(control_arm = case_when(
+  mutate(arm = case_when(
     id < 11 ~ "Control",
     id >10 ~ "Experiment"
   ),
@@ -124,6 +124,25 @@ files_df_tidy = files_df|>
     names_prefix = "week_"
   )|>
   select(-id)|>
-  relocate(subject_id, control_arm)
+  relocate(subject_id, arm)|>
+  mutate(subject_id = as.character(subject_id))
 ```
+The above data frame containing subject id for both control and experiment groups as well as each week's values for every participants. It has `r nrow(files_df_tidy)` rows and `r ncol(files_df_tidy)` columns. 
 
+### Visualization
+
+Then, we would create a spaghetti plot showing observations on each subject over time. 
+
+```{r sphaghetti_plot_p2}
+spaghetti_p = ggplot(files_df_tidy, aes(x = week, y = values, group = subject_id))
+spaghetti_p+
+  geom_line(aes(color = arm))+
+  stat_summary(aes(group = 1), geom = "point", fun.y = mean,
+    shape = 17, size = 2)+
+  facet_grid(~arm)+
+  labs(title = "Observations On Each Subject Over 8-weeks Period")+
+  xlab("Week")+
+  ylab("Value")
+  
+  
+```
