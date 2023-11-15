@@ -3,8 +3,57 @@ title: "p8105_hw5_yy3439"
 output: github_document
 date: "2023-11-14"
 ---
-
 ```{r}
-
+library(tidyverse)
+library(ggplot2)
+library(purrr)
+library(broom)
 ```
 
+
+
+## Problem 1
+
+```{r}
+homicide_data = read_csv("./data/homicide-data.csv") #import data
+```
+
+### Description of the Raw Data
+
+The raw data has 12 columns and 52179 rows. The variables(columns) are comprised of two types: characters and numerical.
+
+### Total Number of homicides and the number of unsolved homicides
+```{r}
+homicide_data_tidy = homicide_data|>
+  mutate(city_state = str_c(city, state, sep = ", ", collapse = NULL))|> #create the city_state variable
+  mutate(result = case_when(
+    disposition == "Closed without arrest" ~ "unsolved", #create the result variable which indicates whether the case is solved or unsolved
+    disposition == "Closed by arrest" ~ "solved",
+    disposition == "Open/No arrest" ~ "unsolved"
+  ))
+```
+
+```{r}
+homicides_sum = homicide_data_tidy|>
+  group_by(city_state)|>
+  summarise(total_homicides = n(),
+            unsolved_homicides = sum(result == "unsolved"))
+homicides_sum
+```
+
+As a result, the data frame contains each city in the U.S. and their corresponding totoal number of homicides as well as total number of unsolved homicides. 
+
+### Conduct `prop.test` on Baltimore
+
+```{r}
+Baltimore_hom_total = homicides_sum|>
+  filter(city_state == "Baltimore, MD")|>
+  pull(total_homicides)
+Baltimore_hom_unsolved = homicides_sum|>
+  filter(city_state == "Baltimore, MD")|>
+  pull(unsolved_homicides)
+
+baltimore_test = prop.test(Baltimore_hom_unsolved, Baltimore_hom_total)
+baltimore_test_tidy = broom::tidy(baltimore_test)
+```
+As a result, the estimated proportion of unsolved homicides in Baltimore is `r baltimore_test_tidy |> pull(estimate)`. In addition, the confidence interval is [`r baltimore_test_tidy |> pull(conf.low)`, `r baltimore_test_tidy |> pull(conf.high)`]. Additionally, the estimated proportion falls between the confidence interval. 
