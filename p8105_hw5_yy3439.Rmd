@@ -57,3 +57,28 @@ baltimore_test = prop.test(Baltimore_hom_unsolved, Baltimore_hom_total)
 baltimore_test_tidy = broom::tidy(baltimore_test)
 ```
 As a result, the estimated proportion of unsolved homicides in Baltimore is `r baltimore_test_tidy |> pull(estimate)`. In addition, the confidence interval is [`r baltimore_test_tidy |> pull(conf.low)`, `r baltimore_test_tidy |> pull(conf.high)`]. Additionally, the estimated proportion falls between the confidence interval. 
+
+### Conduct the `prop.test` On Each City
+
+```{r}
+test = homicides_sum |>
+  mutate(
+  prop_test = map2(homicides_sum$unsolved_homicides, homicides_sum$total_homicides, \(x, y) prop.test(x = x, n = y)),
+  tidy_test = map(prop_test, broom::tidy))|>
+  select(-prop_test)|>
+  unnest(tidy_test)|>
+  select(city_state, estimate, conf.low, conf.high)
+test
+```
+
+### Visualization
+
+```{r}
+test|>
+  mutate(city_state = fct_reorder(city_state, estimate))|>
+  ggplot(aes(x = city_state, y = estimate))+
+  geom_point()+
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high))+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
