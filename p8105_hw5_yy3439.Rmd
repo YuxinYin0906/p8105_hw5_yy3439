@@ -243,7 +243,7 @@ sim_results_df|>
 ```
 
 ### Visualization: Part 3
-```{r}
+```{r visualization_p3_3}
 sim_results_df|>
   filter(p.value < 0.05)|>
   group_by(true_mean)|>
@@ -256,3 +256,4 @@ sim_results_df|>
   ylab("Average Estimate of Rejected")
 ```
 
+Based on the above two plots, the sample average of true mean across tests are equal to the true means. However, the sample average of true mean across tests for which the null is rejected diverge from the true mean. Specifically, those samples with true mean equals 1, 2, and 3 diverge from the true mean significantly. From the first graph, we know that as the power of test increases, larger proportion of the values would be rejected. Similarly, we obtain the similar trend for the above two graphs. Therefore, as the true mean increases, larger proportion of data was rejected. As a result, the average estimate of rejected tends to be closer to the true mean. 
