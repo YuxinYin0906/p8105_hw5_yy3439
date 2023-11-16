@@ -196,7 +196,7 @@ simulation = function(true_mean){
 
 sim_results_df = 
   expand_grid(
-    true_mean = c(1,2,3,4,5,6),
+    true_mean = c(0,1,2,3,4,5,6),
     iter = 1:5000
   ) |> 
   mutate(
@@ -223,6 +223,36 @@ sim_results_df|>
   xlab("True Mean")+
   ylab("Reject Proportion")
 ```
+
 Based on the above graph, we can see that, as the true mean increases, the proportion of rejected null hypothesis increases. This association can be interpreted as larger effect size would increase the power of the study. 
 
+
+### Visualization: Part 2
+
+```{r visualization_p3_2}
+sim_results_df|>
+  group_by(true_mean)|>
+  summarise(avg_estimate = mean(estimate))|>
+  ggplot(aes(x= true_mean, y = avg_estimate))+
+  geom_line()+
+  scale_x_continuous(breaks = c(1:6))+
+  labs(title = "Average Estimate for Each True Mean")+
+  xlab("True Mean")+
+  ylab("Average Estimate")
+  
+```
+
+### Visualization: Part 3
+```{r}
+sim_results_df|>
+  filter(p.value < 0.05)|>
+  group_by(true_mean)|>
+  summarise(avg_estimate_rej = mean(estimate))|>
+  ggplot(aes(x= true_mean, y = avg_estimate_rej))+
+  geom_line()+
+  scale_x_continuous(breaks = c(1:6))+
+  labs(title = "Average Estimate of Rejected for Each True Mean")+
+  xlab("True Mean")+
+  ylab("Average Estimate of Rejected")
+```
 
